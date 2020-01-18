@@ -64,6 +64,7 @@ func goRequest(r request) response {
 
 		req.Header.Set(parts[0], parts[1])
 	}
+	req.Header.Set("Accept", "*/*")
 
 	resp, err := httpClient.Do(req)
 	if resp != nil {

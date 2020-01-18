@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 )
 
 // a response is a wrapper around an HTTP response;
@@ -60,19 +61,22 @@ func (r response) StringNoHeaders() string {
 }
 
 // save write a request and response output to disk
-func (r response) save(pathPrefix string, noHeaders bool) (string, error) {
-
+func (r response) save(pathPrefix string, staticOutput, noHeaders bool) (string, error) {
 	content := []byte(r.String())
 	if noHeaders {
 		content = []byte(r.StringNoHeaders())
 	}
 
-	checksum := sha1.Sum(content)
 	parts := []string{pathPrefix}
-
 	parts = append(parts, r.request.Hostname())
-	parts = append(parts, fmt.Sprintf("%x", checksum))
 
+	if staticOutput {
+		fName := strings.ReplaceAll(r.request.Hostname(), ".", "_")
+		parts = append(parts, fName)
+	} else {
+		checksum := sha1.Sum(content)
+		parts = append(parts, fmt.Sprintf("%x", checksum))
+	}
 	p := path.Join(parts...)
 
 	if _, err := os.Stat(path.Dir(p)); os.IsNotExist(err) {

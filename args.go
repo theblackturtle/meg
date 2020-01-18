@@ -51,10 +51,11 @@ type config struct {
 	timeout        int
 	verbose        bool
 
-	paths     string
-	hosts     string
-	output    string
-	noHeaders bool
+	paths        string
+	hosts        string
+	output       string
+	staticOutput bool
+	noHeaders    bool
 
 	requester requester
 }
@@ -110,6 +111,10 @@ func processArgs() config {
 	noHeaders := false
 	flag.BoolVar(&noHeaders, "no-headers", false, "")
 
+	staticOutput := false
+	flag.BoolVar(&staticOutput, "static-output", false, "Save output in one file")
+	flag.BoolVar(&staticOutput, "k", false, "Save output in one file")
+
 	// verbose param
 	verbose := false
 	flag.BoolVar(&verbose, "verbose", false, "")
@@ -155,6 +160,7 @@ func processArgs() config {
 		paths:          paths,
 		hosts:          hosts,
 		output:         output,
+		staticOutput:   staticOutput,
 		noHeaders:      noHeaders,
 	}
 }
@@ -176,6 +182,7 @@ func init() {
 		h += "  -s, --savestatus <status>  Save only responses with specific status code\n"
 		h += "  -t, --timeout <millis>     Set the HTTP timeout (default: 10000)\n"
 		h += "  -v, --verbose              Verbose mode\n"
+		h += "  -k, --static-output        Save output in one file\n"
 		h += "  -X, --method <method>      HTTP method (default: GET)\n\n"
 
 		h += "Defaults:\n"

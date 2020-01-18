@@ -6,12 +6,13 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
 
 const (
-	userAgent = "Mozilla/5.0 (compatible; meg/0.2; +https://github.com/tomnomnom/meg)"
+	userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
 
 	// argument defaults
 	defaultPathsFile = "./paths"
@@ -70,11 +71,11 @@ func main() {
 		wg.Add(1)
 
 		go func() {
+			defer wg.Done()
 			for req := range requests {
 				rl.Block(req.Hostname())
 				responses <- c.requester(req)
 			}
-			wg.Done()
 		}()
 	}
 
@@ -83,6 +84,7 @@ func main() {
 	var owg sync.WaitGroup
 	owg.Add(1)
 	go func() {
+		defer owg.Done()
 		for res := range responses {
 			if len(c.saveStatus) > 0 && !c.saveStatus.Includes(res.statusCode) {
 				continue
@@ -93,7 +95,7 @@ func main() {
 				continue
 			}
 
-			path, err := res.save(c.output, c.noHeaders)
+			path, err := res.save(c.output,c.staticOutput, c.noHeaders)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to save file: %s\n", err)
 			}
@@ -104,7 +106,6 @@ func main() {
 				fmt.Printf("%s", line)
 			}
 		}
-		owg.Done()
 	}()
 
 	// send requests for each path for every host
@@ -163,7 +164,10 @@ func readLines(filename string) ([]string, error) {
 	lines := make([]string, 0)
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
-		lines = append(lines, sc.Text())
+		line := strings.TrimSpace(sc.Text())
+		if line != "" {
+			lines = append(lines, line)
+		}
 	}
 
 	return lines, sc.Err()
